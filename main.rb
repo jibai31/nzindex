@@ -1,15 +1,8 @@
-# puts "Enter A"
-# a = gets.chomp
-# puts "Enter B"
-# b = gets.chomp
-# c = a.to_i + b.to_i
-# puts c
-
 @playing = true
 @my_score = {L: 1, R: 1}
 @ai_score = {L: 1, R: 1}
 
-# attr_reader :my_score, :ai_score
+# Printing methods ------------------------------------------------
 
 def print_status
   if @my_score.values.inject(&:+) == 0
@@ -36,6 +29,8 @@ def instructions
   "L: play left | R: play right | L2: move 2 from left to right"
 end
 
+# Parse input -----------------------------------------------------
+
 def parse(input)
   raise "Invalid" unless input && [1, 2].include?(input.length)
   side = input[0].to_sym
@@ -48,6 +43,26 @@ def parse(input)
     return [side, nb]
   end
 end
+
+# Helpers ---------------------------------------------------------
+
+def random_side
+  rand(2) == 0 ? :L : :R
+end
+
+def other_side(side)
+  side == :L ? :R : :L
+end
+
+def other_player(player)
+  player == :me ? :ai : :me
+end
+
+def random_nb_from_hand(score)
+  1 + rand(score - 1)
+end
+
+# Commands --------------------------------------------------------
 
 def move(player, side, nb)
   score = player == :me ? @my_score : @ai_score
@@ -65,30 +80,25 @@ def attack(attacked, side)
   attacked_score[side] = 0 if attacked_score[side] > 4
 end
 
-def random_side
-  rand(2) == 0 ? :L : :R
-end
+# AI commands -----------------------------------------------------
 
-def other_side(side)
-  side == :L ? :R : :L
-end
-
-def other_player(player)
-  player == :me ? :ai : :me
-end
-
-def ai_attack_or_defend(side, offensiveness = 2)
-  other_side = other_side(side)
+# Offensiveness of 2 means it will always attack except 1 out of 2 times,
+# Offensiveness of 3 means it will always attack except 1 out of 3 times, etc
+def ai_attack_or_defend(side, offensiveness = 3)
   if rand(offensiveness) == 0
-    "#{other_side}#{1 + rand(@ai_score[other_side] - 1)}"
+    other_side = other_side(side)
+    nb = [random_nb_from_hand(@ai_score[other_side]), 4 - @ai_score[side]].min
+    "#{other_side}#{nb}"
   else
     side
   end
 end
 
-def ai_attack_or_lighten(side, offensiveness = 2)
+def ai_attack_or_lighten(side, offensiveness = 3)
   if rand(offensiveness) == 0
-    "#{side}#{1 + rand(@ai_score[side] - 1)}"
+    other_side = other_side(side)
+    nb = [random_nb_from_hand(@ai_score[side]), 4 - @ai_score[other_side]].min
+    "#{side}#{nb}"
   else
     side
   end
@@ -116,6 +126,8 @@ def ai_play
   end
 end
 
+# Main play method ------------------------------------------------
+
 def play(player, input)
   side, nb = parse(input)
   other_player = other_player(player)
@@ -126,10 +138,12 @@ def play(player, input)
   end
 end
 
+# Program execution -----------------------------------------------
+
 puts instructions
+print_status
 
 while @playing do
-  print_status
   begin
     input = gets.chomp
     play(:me, input)
@@ -144,5 +158,6 @@ while @playing do
   sleep 3
   puts answer
   play(:ia, answer)
+  sleep 1
+  print_status
 end
-
